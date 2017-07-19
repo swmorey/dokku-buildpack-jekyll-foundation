@@ -164,6 +164,63 @@ else
   cp conf/mime.types "$BUILD_DIR/nginx/mime.types"
 fi
 
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+if [[ `ruby -v` == "ruby 1"* ]]; then
+  echo "-----> Installing Ruby 2.2.1"
+  git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
+  git clone https://github.com/garnieretienne/rvm-download.git ~/.rbenv/plugins/rvm-download
+  export PATH="$HOME/.rbenv/shims:$HOME/.rbenv/bin:$PATH"
+  rbenv download 2.2.1
+  rbenv rehash
+  rbenv local 2.2.1
+else
+  echo "-----> Using `ruby -v`"
+fi
+
+
+export GEM_HOME=$BUILD_DIR/.gems
+export PATH=$BUILD_DIR/.gems/bin:$PATH
+
+if [ ! -f $BUILD_DIR/.gems/bin/jekyll ]; then
+    echo "Jekyll not found!"
+    echo "-----> Installing Jekyll"
+    gem install liquid -v 2.2.2 --no-rdoc --no-ri | indent
+    gem install jekyll redcarpet sass --no-rdoc --no-ri | indent
+    gem install therubyracer --no-rdoc --no-ri | indent
+
+    if [ -f $BUILD_DIR/Gemfile ]; then
+      gem install bundler --no-rdoc --no-ri | indent
+    fi
+fi
+
+
+# Set charset to avoid https://github.com/jekyll/jekyll/issues/4268
+echo "-----> Setting UTF-8 environment"
+export LC_ALL=C.UTF-8
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+
+
+
+echo "-----> Building Jekyll site"
+cd $BUILD_DIR
+
+if [ -f $BUILD_DIR/Gemfile ]; then
+  $BUILD_DIR/.gems/bin/bundle install --binstubs=$BUILD_DIR/.gems/bin --path=$BUILD_DIR/.gems | indent
+fi
+
+$BUILD_DIR/.gems/bin/jekyll build | indent
+if [ -f sass/style.scss ]; then
+  $BUILD_DIR/.gems/bin/sass sass/style.scss style.css | indent
+fi
+
 # build a startup script
 cat <<EOF >"$BUILD_DIR/start_nginx"
 #!/usr/bin/env bash
