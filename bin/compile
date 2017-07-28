@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
+
 set -eo pipefail; [[ $TRACE ]] && set -x
 
 NGINX_VERSION="1.10.1"
@@ -23,7 +24,6 @@ CUR_DIR=$(cd "$(dirname "$0")"; cd ..; pwd)
 
 mkdir -p "$BUILD_DIR" "$CACHE_DIR"
 
-
 function indent() {
   c='s/^/       /'
   case $(uname) in
@@ -44,7 +44,6 @@ else
   echo "-----> Using `ruby -v`"
 fi
 
-
 export GEM_HOME=$BUILD_DIR/.gems
 export PATH=$BUILD_DIR/.gems/bin:$PATH
 
@@ -60,26 +59,18 @@ if [ ! -f $BUILD_DIR/.gems/bin/jekyll ]; then
     fi
 fi
 
-
 # Set charset to avoid https://github.com/jekyll/jekyll/issues/4268
 echo "-----> Setting UTF-8 environment"
 export LC_ALL=C.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
-
-
 echo "-----> Building Jekyll site"
 cd $BUILD_DIR
-
-if [ -f $BUILD_DIR/Gemfile ]; then
-  $BUILD_DIR/.gems/bin/bundle install --binstubs=$BUILD_DIR/.gems/bin --path=$BUILD_DIR/.gems | indent
-fi
-
-$BUILD_DIR/.gems/bin/jekyll build | indent
-if [ -f sass/style.scss ]; then
-  $BUILD_DIR/.gems/bin/sass sass/style.scss style.css | indent
-fi
+rbenv local 2.2.1
+yarn
+bundle install
+gulp build --production
 
 if [[ ! -e "${BUILD_DIR}/www" ]]; then
   echo "-----> Copy static files to www"
