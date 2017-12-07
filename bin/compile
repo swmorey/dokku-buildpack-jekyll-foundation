@@ -69,7 +69,7 @@ echo "-----> Building Jekyll site"
 cd $BUILD_DIR
 rbenv local 2.2.1
 yarn
-bundle install --force
+bundle install --force --quiet
 gulp build --production
 
 if [[ ! -e "${BUILD_DIR}/www" ]]; then
