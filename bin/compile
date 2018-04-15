@@ -67,7 +67,6 @@ export LANGUAGE=en_US.UTF-8
 
 echo "-----> Building Jekyll site"
 cd $BUILD_DIR
-rbenv local 2.2.1
 yarn
 bundle install --without jekyll_optional_dependencies
 gulp build --production
